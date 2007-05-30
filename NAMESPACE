@@ -1,0 +1,33 @@
+useDynLib(graph)
+
+import(methods, cluster)
+
+exportClasses(distGraph,
+  clusterGraph, graph, graphNEL, file, connection, gzfile, bzfile, url,
+  graphAM, attrData, simpleEdge) 
+
+exportMethods(DFS, Dist, acc, addEdge, addNode, adj,
+      clearNode, clusteringCoefficient, combineNodes, complement, connComp,
+      degree, dumpGXL, edgeL, edgeMatrix, edgeNames, edgeWeights, edgemode,
+      "edgemode<-", edges, "nodes<-", fromGXL, inEdges, initialize,
+      intersection, intersection2, isAdjacent, isConnected, isDirected, join,
+      nodes, numNodes, numEdges, removeEdge, removeNode, show, subGraph,
+      threshold, toGXL, union, validateGXL, coerce, toDotR, attrDefaults,
+      "attrDefaults<-", edgeDataDefaults, "edgeDataDefaults<-",
+      nodeDataDefaults, "nodeDataDefaults<-", edgeData, "edgeData<-", nodeData,
+      "nodeData<-", attrDataItem, "attrDataItem<-",
+              "removeAttrDataItem<-", ugraph)
+
+
+export(boundary, buildRepDepGraph, calcProb, calcSumProb,
+       duplicatedEdges, graph2SparseM, listEdges,
+       randomEGraph, randomGraph, randomNodeGraph,
+       validGraph, eWV, pathWeights, .dropEdges, 
+       aveNumEdges, sparseM2Graph, gxlTreeNEL,
+       ftM2adjM, ftM2graphNEL, .ftM2other, int2ftM, 
+       ftM2int, aM2bpG, mostEdges, numNoEdges, reverseEdgeDirections, ugraphOld) 
+
+
+S3method(write,tlp)
+
+
