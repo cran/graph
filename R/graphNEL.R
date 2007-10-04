@@ -215,11 +215,13 @@ setMethod("subGraph", signature(snodes="character", graph="graphNEL"),
               ## FIXME: need to clean the attributes, right now we are passing
               ##        too much.
               nodeIdx <- match(snodes, names(graph@nodeData), 0)
+              ans@nodeData@defaults <- graph@nodeData@defaults
               ans@nodeData@data <- graph@nodeData@data[nodeIdx]
               ee <- .getAllEdges(ans)
               if (length(ee$from) && length(ee$to)) {
                   kk <- .makeEdgeKeys(ee$from, ee$to)
                   whkk <- match(kk, names(graph@edgeData), 0)
+                  ans@edgeData@defaults <- graph@edgeData@defaults
                   ans@edgeData@data <- graph@edgeData@data[whkk]
               }
               ans
@@ -320,7 +322,8 @@ setMethod("clearNode", c("character", "graphNEL"), function(node, object) {
     gN <- nodes(object)
     whN <- match(node, gN)
     if(any(is.na(whN)) )
-      stop(paste(whN[is.na(whN)], "is not a node in the graph"))
+      stop("the following are not nodes in the graph:\n",
+           paste(gN[is.na(whN)], collapse=", "))
     ## clear node attributes
     object <- clearNodeData(object, node)
     object <- .dropEdges(object, whN)
@@ -565,4 +568,29 @@ setMethod("inEdges", c("character", "graphNEL"),
     self
 }
 
+##a leaf is an element of the graph with in edges and no out
+## edges - the edgeL list in a directed graphNEL list the out
+##edges
+
+inOutCounts <- function(object) {
+   if(!(edgemode(object)) == "directed") stop("only for directed graphs")
+   numOut=sapply(object@edgeL, function(x) length(x$edges))
+   inEdges = nodes(object)[unlist(sapply(object@edgeL, function(x)
+                x$edges))]
+   numIn = table(inEdges)
+   return(list(numOut = numOut, numIn = numIn))
+ }
+
+##FIXME: this is a replacement for the inEdges function -
+##it needs to be tested and made to handle a list of
+##nodes to find in edges - but that can easily be done
+##simply by computing all and then subsetting
+ inE <- function(object) {
+   if(!(edgemode(object)) == "directed") stop("only for directed graphs")
+   inEdges = nodes(object)[unlist(sapply(object@edgeL, function(x)
+                x$edges))]
+   numE = sapply(object@edgeL, function(x) length(x$edges))
+   froms = rep(names(object@edgeL), numE)
+   split(froms, inEdges)
+ }
 

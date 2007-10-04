@@ -5,7 +5,7 @@ importFrom(tools, package.dependencies)
 
 exportClasses(distGraph,
   clusterGraph, graph, graphNEL, file, connection, gzfile, bzfile, url,
-  graphAM, attrData, simpleEdge) 
+  graphAM, attrData, simpleEdge, edgeSet, edgeSetNEL, edgeSetAM, multiGraph) 
 
 exportMethods(DFS, Dist, acc, addEdge, addNode, adj,
       clearNode, clusteringCoefficient, combineNodes, complement, connComp,
@@ -17,7 +17,7 @@ exportMethods(DFS, Dist, acc, addEdge, addNode, adj,
       "attrDefaults<-", edgeDataDefaults, "edgeDataDefaults<-",
       nodeDataDefaults, "nodeDataDefaults<-", edgeData, "edgeData<-", nodeData,
       "nodeData<-", attrDataItem, "attrDataItem<-",
-              "removeAttrDataItem<-", ugraph)
+              "removeAttrDataItem<-", ugraph, leaves)
 
 
 export(boundary, buildRepDepGraph, calcProb, calcSumProb,

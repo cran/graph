@@ -61,6 +61,7 @@ testInEdges <- function() {
     expectedInEdges <- list(a=character(0), b="d", c=c("a", "b", "d"),
                             d="a")
     checkEquals(expectedInEdges, inEdges(g))
+    checkEquals(expectedInEdges, inEdges(object=g))
     n <- c("a", "d")
     checkEquals(expectedInEdges[n], inEdges(n, g))
 }
@@ -392,3 +393,19 @@ test_rename_nodes_nodeData <- function() {
     checkEquals(nd, nodeData(g, attr="type"))
 }
     
+test_subgraph_attrs <- function() {
+    x <- new("graphNEL", nodes=c("a", "b"),
+             edgeL=list(a="b", b="b"),
+             edgemode="directed")
+    defs <- list(tag="NONE")
+    nodeDataDefaults(x) <- defs
+    edgeDataDefaults(x) <- defs
+    nodeData(x, n="a", attr="tag") <- "zoo"
+    edgeData(x, "a", "b", attr="tag") <- "yes"
+
+    gg <- subGraph(c("a", "b"), x)
+    checkEquals(defs, nodeDataDefaults(gg))
+    checkEquals(defs, edgeDataDefaults(gg))
+    checkEquals("zoo", nodeData(gg, "a", attr="tag")[[1]])
+    checkEquals("yes", edgeData(gg, "a", "b", attr="tag")[[1]])
+}

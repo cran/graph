@@ -23,7 +23,7 @@ setGeneric("nodes<-", function(object, value) standardGeneric("nodes<-"))
 setGeneric("renameNodes", function(g, value) standardGeneric("renameNodes"))
 
 
-setGeneric("edges", function(object, which) standardGeneric("edges"))
+setGeneric("edges", function(object, which, ...) standardGeneric("edges"))
 
 
 ## The funny arg=1, is to allow default values in the methods.
@@ -109,8 +109,14 @@ setGeneric("removeAttrDataItem<-", function(self, x, value)
 
 
 ## ---------------------------------------------------------------------
-## node and edge attribute generics
+## graph, node, edge attribute generics
 ## ---------------------------------------------------------------------
+setGeneric("graphData", function(self, attr)
+           standardGeneric("graphData"))
+
+setGeneric("graphData<-", function(self, attr, value)
+           standardGeneric("graphData<-"))
+
 setGeneric("edgeDataDefaults", function(self, attr)
            standardGeneric("edgeDataDefaults"))
 
@@ -176,6 +182,9 @@ setGeneric("isConnected", function(object, ...) standardGeneric("isConnected"))
 
 
 setGeneric("inEdges", function(node, object) standardGeneric("inEdges"))
+
+setGeneric("leaves", signature="object", # don't dispatch on degree.dir
+           function(object, degree.dir) standardGeneric("leaves"))
 
 
 setGeneric("edgeNames", function(object, ...) standardGeneric("edgeNames"))
