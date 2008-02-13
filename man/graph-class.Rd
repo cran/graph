@@ -84,6 +84,10 @@
 \alias{union}
 \alias{union,graph,graph-method}
 
+\alias{updateGraph}
+\alias{updateGraph,graph-method}
+
+
 \title{Class "graph" }
 \description{A virtual class that all graph classes should extend. }
 \section{Objects from the Class}{
@@ -165,7 +169,10 @@ A virtual Class: No objects may be created from it.
 
     \item{join}{\code{signature(x = "graph", y = "graph")}: returns the
       joining of two graphs.  Nodes which are shared by both graphs will
-      have their edges merged.}
+      have their edges merged.  Note that edgeWeights for the resulting
+      graph are all set to 1.  Users wishing to preserve weights in
+      a join operation must
+      perform addEdge operations on the resulting graph to restore weights.}
 
     \item{nodes<-}{A generic function that allows different
       implementations of the \code{graph} class to reset the node
@@ -193,8 +200,12 @@ A virtual Class: No objects may be created from it.
       vector of the edge names for this graph, using the format
       \code{tail\~head}, where \code{head} is the name of the tail node
       and \code{head} is the name of the head node.}
+    
+    \item{updateGraph}{\code{signature(object = "graph")}: Updates old
+      instances of graph objects.}
+  }
 
-    }
+  
   }
 
 \details{

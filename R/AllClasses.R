@@ -2,9 +2,32 @@
 setClass("attrData", representation(data="list",
                                     defaults="list"))
 
+## (FH Oct 4.) The edgemode slot is deprecated, the information will
+## go into the egemode item of the graphData list. For now we keep it
+## around for compatability reasons but the methods have been changed to deal
+## with the new case. Also changed the prototypes of distGraph and
+## clusterGraph accordingly
+
+
+
+## class to hold information regarding rendering of a graph.  Doesn't
+## make sense except as a slot in a graph (the names have to match)
+
+setClass("renderInfo", 
+         representation(nodes="list", # information on nodes
+                        edges="list", # information on edges
+                        graph="list",
+                        pars="list")) # list passed on to graph.par before rendering
+
+
 setClass("graph", representation(edgemode="character",
                                  edgeData="attrData",
                                  nodeData="attrData",
+
+                                 renderInfo="renderInfo",
+                                 ## nodeInfo="list",
+                                 ## edgeInfo="list",
+
                                  graphData="list",
                                  "VIRTUAL"))
 
@@ -27,13 +50,12 @@ setOldClass("dist")
 
 setClass("distGraph",
          representation(Dist="dist"),
-         prototype=list(edgemode="undirected"),
+         prototype=list(graphData=list(edgemode="undirected")),
          contains="graph")
-
 
 setClass("clusterGraph",
          representation(clusters="list"), contains="graph",
-         prototype=list(edgemode="undirected"))
+         prototype=list(graphData=list(edgemode="undirected")))
 
 
 
