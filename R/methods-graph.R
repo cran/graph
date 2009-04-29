@@ -114,6 +114,7 @@ setReplaceMethod("edgemode", c("graph", "character"),
                          object <- updateGraph(object)
                      }
                      object@graphData$edgemode <- value
+                     edgeRenderInfo(object) <- list(arrowhead=NULL, arrowtail=NULL)
                      object
                  })
 
@@ -202,7 +203,7 @@ setMethod("isAdjacent",signature(object="graph", from="character",
                      paste(to[toIdx == 0], collapse=", "))
               fromEdges <- edges(object)[from]
               .Call("graph_is_adjacent", fromEdges, to,
-                    PACKAGE="graph")
+                    PACKAGE="BioC_graph")
           })
 
 
@@ -324,7 +325,7 @@ setMethod("edgeWeights", signature(object="graph", index="character"),
               ew <- edgeData(object, from=index, attr=attr)
               if (!length(ew))
                 return(lapply(edges(object), function(x)
-                              vector(mode=mode(default), length=0)))
+                              vector(mode=mode(default), length=0))[index])
               gEdges <- edges(object)[index]
               edgeCounts <- sapply(gEdges, length)
               nn <- rep(index, edgeCounts)
@@ -423,7 +424,7 @@ setMethod("intersection2", c("graph", "graph"), function(x,y) {
            edgeM <- 1
 
         .Call("graphIntersection", nodes(x), nodes(y),
-              edges(x), edges(y), edgeM, PACKAGE="graph")
+              edges(x), edges(y), edgeM, PACKAGE="BioC_graph")
 
 })
 

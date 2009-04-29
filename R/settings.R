@@ -1,6 +1,4 @@
-
-
-
+## change or return the current defaults for a graph's rendering information
 graph.par <- function(...)
 {
     new <- list(...)
@@ -26,7 +24,11 @@ graph.par <- function(...)
     invisible(retVal)
 }
 
+
+## get a particular graph rendering parameter set. Valid sets are "nodes",
+## "edges" and "graph"
 graph.par.get <- function(name) .GraphEnv$par[[name]]
+
 
 ## need NULL or empty string for everything that should not be set to
 ## allow for resetting (like labels and title)
@@ -47,13 +49,12 @@ graph.par.get <- function(name) .GraphEnv$par[[name]]
               col.main="black", col.sub="black"))
 
 
-
-
+## create a renderInfo object
 .renderInfoPrototype <- new("renderInfo")
 
+
 ## FIXME: make these generic?
-
-
+## return node-specific rendering parameters 
 nodeRenderInfo <- function(g, name)
 {
     if(missing(name))
@@ -65,6 +66,9 @@ nodeRenderInfo <- function(g, name)
         tmp
     }
 }
+
+
+## return edge-specific rendering parameters 
 edgeRenderInfo <- function(g, name)
 {
     if(missing(name))
@@ -77,6 +81,8 @@ edgeRenderInfo <- function(g, name)
     }
 }
 
+
+## return graph-specific rendering parameters 
 graphRenderInfo <- function(g, name)
 {
     if(missing(name))
@@ -89,6 +95,7 @@ graphRenderInfo <- function(g, name)
     }
 }
 
+## return content of the pars slot
 parRenderInfo <- function(g, name)
 {
     if(missing(name))
@@ -107,33 +114,50 @@ setRenderInfo <- function(g, what, value, validNames, n = length(validNames))
         stop("'value' must be a list of named parameters")
     for (i in names(value))
     {
+        thisVal <- value[[i]]
         if (is.null(slot(g@renderInfo, what)[[i]]))
         {
             ## i doesn't exist.  Need to create appropriate placeholder
+            m <- if(is.null(thisVal)) "character" else mode(thisVal)
             slot(g@renderInfo, what)[[i]] <-
-                vector(mode = mode(value[[i]]), length = n)
+                vector(mode=m, length = n)
             ## initialize to NA (seems to work for lists too, but may
             ## need methods for non-trivial objects)
             is.na(slot(g@renderInfo, what)[[i]]) <- TRUE
             names(slot(g@renderInfo, what)[[i]]) <- validNames
         }
         ## Now replace relevant parts
-        if (length(value[[i]]) == 1 && is.null(names(value[[i]])))
+        if (length(thisVal) <= 1 && is.null(names(thisVal)))
         {
-            ## change everything
-            slot(g@renderInfo, what)[[i]][ ] <- value[[i]]
+            ## change everything or revert to default if value is NULL
+            repl <-
+                if(is.null(thisVal)) graph.par()[[what]][[i]] else thisVal
+            if(is.null(repl)){
+                slot(g@renderInfo, what)[[i]] <- repl
+            }else{
+                for(j in seq_along(slot(g@renderInfo, what)[[i]]))
+                    slot(g@renderInfo, what)[[i]][[j]] <- repl
+            }
         }
         else
         {
             ## change only named values
-            ## FIXME: check for all(names(value[[i]]) %in% nms) ?
-            repNames <- intersect(names(value[[i]]), validNames)
-            slot(g@renderInfo, what)[[i]][repNames] <- value[[i]][repNames]
+            ## FIXME: check for all(names(thisVal) %in% nms) ?
+            repNames <- intersect(names(thisVal), validNames)
+            null <- sapply(thisVal, is.null)
+            if(any(!null))
+                slot(g@renderInfo, what)[[i]][repNames][!null] <-
+                    thisVal[intersect(repNames, names(which(!null)))]
+            if(any(null))
+                 slot(g@renderInfo, what)[[i]][intersect(repNames, names(which(null)))] <-
+                     graph.par()[[what]][[i]]
         }
     }
     g
 }
 
+
+## setter for node render parameters
 "nodeRenderInfo<-" <- function(g, value)
 {
     suppressWarnings(setRenderInfo(g, what = "nodes", value = value,
@@ -148,8 +172,9 @@ swapNames <- function(names){
         sapply(ns, function(x) paste(x[2], x[1], sep="~"))
     }
 }
-    
 
+
+## setter for edge render parameters
 "edgeRenderInfo<-" <- function(g, value)
 {
     ## edge tail and head order doesn't matter for undirected graphs
@@ -157,8 +182,11 @@ swapNames <- function(names){
     ## in the duplicate's names
     if(!isDirected(g)){
         value <- lapply(value, function(x){
-            y <- rep(x,2)
-            names(y) <- c(names(x), swapNames(names(x)))
+            y <- x
+            if(length(x)>1 && !is.null(names(x))){
+                y <- rep(x,2)
+                names(y) <- c(names(x), swapNames(names(x)))
+            }
             y
         })
     }               
@@ -167,6 +195,8 @@ swapNames <- function(names){
                   recipEdges=graphRenderInfo(g, "recipEdges"))))
 }
 
+
+## setter for graph render parameters
 "graphRenderInfo<-" <- function(g, value)
 {
     ## value may be a arbitrary list
@@ -177,6 +207,8 @@ swapNames <- function(names){
     g
 }
 
+
+## setter for the pars slot
 "parRenderInfo<-" <- function(g, value)
 {
     ## value may be a list with components nodes, edges (like graph.pars())
