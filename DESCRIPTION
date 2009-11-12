@@ -1,6 +1,6 @@
 Package: graph
 Title: graph: A package to handle graph data structures
-Version: 1.22.2
+Version: 1.24.1
 Author: R. Gentleman, Elizabeth Whalen, W. Huber, S. Falcon
 Description: A package that implements some simple graph handling
         capabilities.
@@ -17,6 +17,6 @@ Collate: AllClasses.R AllGenerics.R buildDepGraph.R methods-graph.R
         methods-graphAM.R attrData.R reverseEdgeDirections.R
         nodes-methods.R methods-multiGraph.R
 LazyLoad: yes
-Packaged: 2009-04-29 08:19:25 UTC; biocbuild
+Packaged: 2009-11-12 08:50:48 UTC; biocbuild
 Repository: CRAN
-Date/Publication: 2009-05-10 18:53:59
+Date/Publication: 2009-11-13 10:43:07
