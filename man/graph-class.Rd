@@ -10,6 +10,7 @@
 
 \alias{degree}
 \alias{degree,graph,missing-method}
+\alias{degree,MultiGraph,missing-method}
 \alias{degree,graph,ANY-method}
 
 \alias{dfs,graph-method}
@@ -19,9 +20,9 @@
 \alias{edgeDataDefaults<-,graph,character,ANY-method}
 \alias{edgeDataDefaults,graph,missing-method}
 \alias{edgeDataDefaults,graph,character-method}
-\alias{edgeData<-,graph,character,character,character-method}
-\alias{edgeData<-,graph,character,missing,character-method}
-\alias{edgeData<-,graph,missing,character,character-method}
+\alias{edgeData<-,graph,character,character,character,ANY-method}
+\alias{edgeData<-,graph,character,missing,character,ANY-method}
+\alias{edgeData<-,graph,missing,character,character,ANY-method}
 \alias{edgeData,graph,character,character,character-method}
 \alias{edgeData,graph,character,character,missing-method}
 \alias{edgeData,graph,character,missing,character-method}
@@ -127,8 +128,10 @@ A virtual Class: No objects may be created from it.
     \item{degree}{\code{signature(object = "graph", Nodes = "missing")}:
     find the \code{degree} of a node (number of coincident edges).}
 
-  \item{degree}{\code{signature(object = "graph", Nodes = "ANY")}: as
+	\item{degree}{\code{signature(object = "graph", Nodes = "ANY")}: as
       above.  }
+	\item{degree}{\code{signature(object = "MultiGraph", Nodes = "missing")}:
+    find the \code{degree} of a node (number of coincident edges).}
 
     \item{dfs}{\code{signature(object = "graph")}: execute a depth first
     search on a graph starting with the specified node.}

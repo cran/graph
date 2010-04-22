@@ -75,6 +75,50 @@ testInvalidBadNodeNames <- function() {
     checkException(new("graphAM", adjMat=mat), silent=TRUE)
 }
 
+test_empty_graph <- function() {
+    mat <- matrix(integer(0), nrow=0, ncol=0)
+    g <- new("graphAM", adjMat = mat)
+    checkEquals(0L, numNodes(g))
+    checkEquals(0L, numEdges(g))
+    checkEquals(character(0), nodes(g))
+    checkEquals(list(), edges(g))
+
+    m <- as(g, "matrix")
+    checkEquals(c(0L, 0L), dim(m))
+    checkEquals(0L, length(m))
+
+    g <- new("graphAM", adjMat = mat, values = list(weight = 1L))
+    checkEquals(0L, numNodes(g))
+    checkEquals(0L, numEdges(g))
+    checkEquals(character(0), nodes(g))
+    checkEquals(list(), edges(g))
+
+    m <- as(g, "matrix")
+    checkEquals(c(0L, 0L), dim(m))
+    checkEquals(0L, length(m))
+}
+
+test_no_edge_graph <- function() {
+    mat <- matrix(0L, nrow=3, ncol=3,
+                  dimnames=list(letters[1:3], letters[1:3]))
+    g <- new("graphAM", adjMat = mat)
+    checkEquals(letters[1:3], nodes(g))
+    checkEquals(0L, numEdges(g))
+    want <- list(a = character(0), b = character(0), c = character(0))
+    checkEquals(want, edges(g))
+    m <- as(g, "matrix")
+    checkEquals(c(3L, 3L), dim(m))
+    checkTrue(all(m == 0L))
+
+    g <- new("graphAM", adjMat = mat, values = list(weight = 1L))
+    checkEquals(letters[1:3], nodes(g))
+    checkEquals(0L, numEdges(g))
+    checkEquals(want, edges(g))
+
+    m <- as(g, "matrix")
+    checkEquals(c(3L, 3L), dim(m))
+    checkTrue(all(m == 0L))
+}
 
 testValuesToAttr <- function() {
     mat <- matrix(c(0, 0, 1, 2,
@@ -250,6 +294,28 @@ testAddEdge <- function() {
     checkEquals(TRUE, isAdjacent(g1, "b", "e"))
 }
 
+testAddEdgeMultiple <- function()
+{
+    a <- matrix(0L, nrow=8, ncol=8)
+    dimnames(a) <- list(letters[1:8], letters[1:8])
+    G <- new("graphAM", adjMat=a, edgemode = "directed")
+    GU <- new("graphAM", adjMat=a)
+    ## make sure we don't warn for this call
+    tryCatch({
+        H <- addEdge(from=c("a", "b", "c"), to=c("d", "e", "f"), G)
+        HU <- addEdge(from=c("a", "b", "c"), to=c("d", "e", "f"), GU)
+    }, warning = function(w)
+             stop("unwanted warning message: ", conditionMessage(w)))
+    expect <- a
+    fr <- c("a", "b", "c")
+    to <- c("d", "e", "f")
+    wh <- cbind(match(fr, letters[1:8]), match(to, letters[1:8]))
+    expect[wh] <- 1L
+    checkEquals(expect, as(H, "matrix"))
+    expectU <- expect
+    expectU[wh[ , c(2L, 1L)]] <- 1L
+    checkEquals(expectU, as(HU, "matrix"))
+}
 
 testClearNode <- function() {
     mat <- simpleAdjMat()
@@ -392,6 +458,23 @@ testAsMatrix <- function() {
     g2 <- new("graphAM", adjMat=mat, edgemode="undirected",
               values=list(weight=1))
     checkEquals(mat, as(g2, "matrix"))
+}
+
+test_coerce_matrix_to_graphAM <- function()
+{
+    mat <- matrix(c(0, 0, 1, 2,
+                    0, 0, 3, 0,
+                    0, 0, 0, 0,
+                    0, 4, 5, 0),
+                  byrow=TRUE, ncol=4,
+                  dimnames=list(letters[1:4], letters[1:4]))
+
+    g <- as(mat, "graphAM")
+    checkEquals(mat, as(g, "matrix"))
+
+    g2 <- new("graphAM", adjMat=mat, edgemode="directed",
+              values=list("weight"=1))
+    checkEquals(as(g, "matrix"), as(g2, "matrix"))
 }
 
 

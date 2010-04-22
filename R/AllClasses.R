@@ -41,7 +41,6 @@ setClass("graphAM", contains="graph",
          representation(adjMat="matrix"),
          validity=function(object) validGraph(object))
 
-
 setOldClass("dist")
 
 
@@ -53,8 +52,6 @@ setClass("distGraph",
 setClass("clusterGraph",
          representation(clusters="list"), contains="graph",
          prototype=list(graphData=list(edgemode="undirected")))
-
-
 
 
 
@@ -91,4 +88,23 @@ setClass("multiGraph",
                         nodeData="attrData",
                         graphData="list"))
 
+
+setClass("MGEdgeSet",
+         representation = representation(
+         bit_vector = "raw",
+         weights = "numeric",
+         edge_attrs = "list"))
+
+setClass("DiEdgeSet", contains = "MGEdgeSet")
+
+setClass("UEdgeSet", contains = "MGEdgeSet")
+
+setClass("MultiGraph",
+         representation = representation(
+         nodes = "character",
+         ## items will be MGEdgeSet objects
+         edge_sets = "list"))
+
+setClass("graphBAM", contains = "graph",
+         representation(edgeSet = "MGEdgeSet", nodes = "character"))
 

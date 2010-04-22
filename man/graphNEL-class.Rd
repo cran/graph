@@ -11,10 +11,11 @@
 \alias{addEdge,character,character,graphNEL,numeric-method}
 \alias{addEdge,character,character,graphNEL,missing-method}
 \alias{addNode,character,graphNEL-method}
-\alias{adj,graphNEL-method}
+\alias{adj,graphNEL,ANY-method}
 \alias{clearNode,character,graphNEL-method}
 \alias{coerce,graphNEL,generalGraph-method}
 \alias{coerce,graphNEL,graphAM-method}
+\alias{coerce,graphNEL,graphBAM-method}
 \alias{edgeL,graphNEL-method}
 \alias{edges,graphNEL,missing-method}
 \alias{edges,graphNEL,character-method}
@@ -102,6 +103,9 @@ Class \code{"graph"}, directly.
     \item{coerce}{\code{signature(from = "graphNEL", to = "graphAM")}:
       Called via \code{as}, the method converts to an adjacency matrix
       representation.  See \code{\link{graphAM-class}}. }
+    \item{coerce}{\code{signature(from = "graphNEL", to = "graphBAM")}:
+      Called via \code{as}, the method converts to an bit array
+      representation.  See \code{\link{graphBAM-class}}. }
   }
 }
 

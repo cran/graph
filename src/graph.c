@@ -12,7 +12,14 @@ SEXP listLen(SEXP);
 SEXP graph_attrData_lookup(SEXP attrObj, SEXP keys, SEXP attr);
 SEXP graph_sublist_assign(SEXP x, SEXP subs, SEXP sublist, SEXP values);
 SEXP graph_is_adjacent(SEXP fromEdges, SEXP to);
-
+SEXP graph_bitarray_sum(SEXP bits);
+SEXP graph_bitarray_set(SEXP bits, SEXP idx, SEXP val);
+SEXP graph_bitarray_transpose(SEXP bits);
+SEXP graph_bitarray_undirect(SEXP bits);
+SEXP graph_bitarray_rowColPos(SEXP bits);
+SEXP graph_bitarray_subGraph(SEXP bits, SEXP _subIndx);
+SEXP graph_bitarray_edgeSetToMatrix(SEXP nodes, SEXP bits,
+                                    SEXP _weights, SEXP _directed);
 # define graph_duplicated(x) Rf_duplicated(x, FALSE)
 
 static const R_CallMethodDef R_CallDef[] = {
@@ -22,6 +29,7 @@ static const R_CallMethodDef R_CallDef[] = {
     {"graph_attrData_lookup", (DL_FUNC)&graph_attrData_lookup, 3},
     {"graph_sublist_assign", (DL_FUNC)&graph_sublist_assign, 4},
     {"graph_is_adjacent", (DL_FUNC)&graph_is_adjacent, 2},
+    {"graph_bitarray_rowColPos", (DL_FUNC)&graph_bitarray_rowColPos, 1},
     {NULL, NULL, 0},
 };
 
@@ -29,9 +37,7 @@ void R_init_BioC_graph(DllInfo *info) {
     R_registerRoutines(info, NULL, R_CallDef, NULL, NULL);
 }
 
-
-SEXP
-R_scalarString(const char *v)
+SEXP R_scalarString(const char *v)
 {
   SEXP ans = allocVector(STRSXP, 1);
   PROTECT(ans);
@@ -430,3 +436,276 @@ SEXP graph_is_adjacent(SEXP fromEdges, SEXP to)
     UNPROTECT(1);
     return ans;
 }
+
+SEXP graph_bitarray_sum(SEXP bits)
+{
+    /*
+      This approach from
+      http://graphics.stanford.edu/~seander/bithacks.html#CountBitsSetKernighan
+    */
+    unsigned char *bytes = (unsigned char *) RAW(bits);
+    unsigned char v;
+    int c = 0;
+    int len = length(bits);
+    int i;
+    for (i = 0; i < len; i++) {
+        for (v = bytes[i]; v; c++) {
+            v &= v - 1;  /* clear the least significant bit set */
+        }
+    }
+    return ScalarInteger(c);
+}
+
+SEXP graph_bitarray_rowColPos(SEXP bits)
+{
+    SEXP ans, matDim, dimNames, colNames;
+    int i, j = 0, k, len = length(bits), *indices,
+        dim = asInteger(getAttrib(bits, install("bitdim"))), 
+        edgeCount = asInteger(getAttrib(bits, install("nbitset")));
+    unsigned char v, *bytes = (unsigned char *) RAW(bits);
+
+    PROTECT(ans = allocVector(INTSXP, 2 * edgeCount));
+    indices = INTEGER(ans);
+    for (i = 0; i < len; i++) {
+        for (v = bytes[i], k = 0; v; v >>= 1, k++) {
+            if (v & 1) {
+                int idx  = (i * 8) + k; 
+                indices[j] =  (idx % dim) + 1; /* R is 1-based */
+                indices[j + edgeCount] =  (idx / dim) + 1;
+                j++;
+            }
+        }
+    }
+    PROTECT(matDim = allocVector(INTSXP, 2));
+    INTEGER(matDim)[0] = edgeCount; INTEGER(matDim)[1] = 2;
+    setAttrib(ans, R_DimSymbol, matDim);
+
+    PROTECT(colNames = allocVector(STRSXP, 2));
+    SET_STRING_ELT(colNames, 0, mkChar("from"));
+    SET_STRING_ELT(colNames, 1, mkChar("to"));
+
+    PROTECT(dimNames = allocVector(VECSXP, 2));
+    SET_VECTOR_ELT(dimNames, 0, R_NilValue);
+    SET_VECTOR_ELT(dimNames, 1, colNames);
+    setAttrib(ans, R_DimNamesSymbol, dimNames);
+    UNPROTECT(4);
+    return ans;
+}
+
+
+#define COORD_TO_INDEX(x, y, nrow) ((((y)+1) * (nrow)) - ((nrow) - ((x)+1)) - 1)
+#define NROW(x) (INTEGER(getAttrib((x), install("bitdim")))[0])
+#define INDEX_TO_ROW(i, n) ((i) % (n))
+#define INDEX_TO_COL(i, n) ((i) / (n))
+#define IS_SET(b, i, bit) ((b)[i] != 0 && ((b)[i] & (1 << (bit))))
+
+SEXP graph_bitarray_transpose(SEXP bits)
+{
+    SEXP ans;
+    int nrow, i, j, len = length(bits);
+    unsigned char *bytes = RAW(bits), *ans_bytes;
+    ans = PROTECT(duplicate(bits)); /* dup to capture attributes */
+    ans_bytes = RAW(ans);
+    memset(ans_bytes, 0, len);
+    nrow = NROW(bits);
+    /* FIXME: use a single loop, look at R's array.c */
+    for (i = 0; i < nrow; i++) {
+        for (j = 0; j < nrow; j++) {
+            int idx = COORD_TO_INDEX(i, j, nrow),
+                tidx = COORD_TO_INDEX(j, i, nrow);
+            int byteIndex = idx / 8,
+                bitIndex = idx % 8,
+                tBitIndex = tidx % 8;
+            if (IS_SET(bytes, byteIndex, bitIndex))
+                ans_bytes[tidx / 8] |= (1 << tBitIndex);
+        }
+    }
+    UNPROTECT(1);
+    return ans;
+}
+
+/* Given a bit vector representing directed edges, return a new bit
+   vector with the underlying undirected edges.
+ */
+SEXP graph_bitarray_undirect(SEXP bits)
+{
+    int i, j, c = 0, len = length(bits), nrow = NROW(bits);
+    SEXP tbits = PROTECT(graph_bitarray_transpose(bits)),
+         ans = PROTECT(duplicate(bits));
+    unsigned char *bytes = RAW(bits), *tbytes = RAW(tbits), *abytes = RAW(ans);
+    for (i = 0; i < len; i++) {
+        unsigned char v;
+        if (0 != (abytes[i] = bytes[i] | tbytes[i])) {
+            /* keep track of edge count */
+            for (v = abytes[i]; v; c++) {
+                v &= v - 1;  /* clear the least significant bit set */
+            }
+        }
+    }
+    /* zero out lower tri */
+    for (i = 0; i < nrow; i++) {
+        for (j = 0; j < nrow; j++) {
+            if (i > j) {
+                unsigned char v;
+                int idx = COORD_TO_INDEX(i, j, nrow);
+                v = abytes[idx / 8];
+                if (0 != v) {
+                    if (IS_SET(abytes, idx / 8, idx % 8)) c--;
+                    abytes[idx / 8] &= ~(1 << (idx % 8));
+                }
+            }
+        }
+    }
+    INTEGER(getAttrib(ans, install("nbitset")))[0] = c;
+    UNPROTECT(2);
+    return ans;
+}
+
+SEXP graph_bitarray_set(SEXP bits, SEXP idx, SEXP val)
+{
+    SEXP ans = PROTECT(duplicate(bits));
+    int *which, *values, i, nVal = length(val),
+        *num_set = INTEGER(getAttrib(ans, install("nbitset")));
+    unsigned char *bytes = RAW(ans);
+    PROTECT(idx = coerceVector(idx, INTSXP));
+    PROTECT(val = coerceVector(val, INTSXP));
+    which = INTEGER(idx);
+    values = INTEGER(val);
+    for (i = 0; i < nVal; i++) {
+        int w = which[i] - 1;
+        int offset = w / 8;
+        unsigned char bit = w % 8;
+        if (values[i]) {
+            if (!IS_SET(bytes, offset, bit)) (*num_set)++;
+            bytes[offset] |= (1 << bit);
+        } else {
+            if (IS_SET(bytes, offset, bit)) (*num_set)--;
+            bytes[offset] &= ~(1 << bit);
+        }
+    }
+    UNPROTECT(3);
+    return ans;
+}
+
+SEXP graph_bitarray_subGraph(SEXP bits, SEXP _subIndx) {
+    
+    SEXP _dim = getAttrib(bits,install("bitdim")),
+        sgVec, btlen, btdim, btcnt, _ftSetPos, res, namesres;
+    int dim, subLen, prevSetPos = 0, sgSetIndx = 0,
+        linIndx = 0, col, subgBitLen, subgBytes,
+        *subIndx, *ftSetPos, edgeCount = 0, ftLen = 256;
+    PROTECT_INDEX pidx;
+    unsigned char *bytes = (unsigned char *) RAW(bits), *sgBits;
+    dim  = INTEGER(_dim)[0];
+    subIndx = INTEGER(_subIndx);
+    subLen = length(_subIndx);
+    subgBitLen = subLen * subLen;
+    subgBytes = subgBitLen / 8;
+    if ((subgBitLen % 8) != 0) {
+        subgBytes++;
+    }
+    PROTECT(sgVec = allocVector(RAWSXP, subgBytes));
+    sgBits = RAW(sgVec);
+    memset(sgBits, 0, subgBytes);
+    /* TODO: in many cases, this will be more than we need, we should
+       also use the number of edges in the input as a starting point.
+    */
+    _ftSetPos = allocVector(INTSXP, ftLen); /* FIXME: need better guess */
+    PROTECT_WITH_INDEX(_ftSetPos, &pidx);
+    ftSetPos = INTEGER(_ftSetPos); 
+    for (col = 0; col < subLen; col++) { 
+        int col_idx_dim = ((subIndx[col] - 1) * dim) - 1;
+        int row = 0;
+        while (row < subLen) {
+            int setPos = col_idx_dim + subIndx[row];
+            unsigned char v = bytes[setPos / 8];
+            if (v != 0 && v & (1 << (setPos % 8))) {
+                int curSetPos = setPos,
+                    m = prevSetPos;
+                while (m < curSetPos) {
+                    unsigned char tempV = bytes[m / 8];
+                    if (tempV == 0) {
+                        m += 8;
+                    } else {
+                        if (tempV & (1 << (m % 8))) edgeCount++;
+                        m++;
+                    }
+                }
+                prevSetPos = curSetPos + 1;
+                edgeCount++;    /* current edge */
+                if (sgSetIndx == ftLen) {
+                    ftLen *= 2;
+                    if (ftLen > subgBitLen) ftLen = subgBitLen;
+                    REPROTECT(_ftSetPos = lengthgets(_ftSetPos, ftLen), pidx);
+                    ftSetPos = INTEGER(_ftSetPos);
+                }
+                ftSetPos[sgSetIndx] = edgeCount;
+                sgSetIndx++;
+                sgBits[linIndx / 8] |= (1 << (linIndx % 8));
+            }
+            linIndx++;
+            row++;
+        }
+    }
+    REPROTECT(_ftSetPos = lengthgets(_ftSetPos, sgSetIndx), pidx);
+    PROTECT(btlen = ScalarInteger(subgBitLen));
+    PROTECT(btcnt = ScalarInteger(sgSetIndx));
+    PROTECT(btdim = allocVector(INTSXP, 2));
+    INTEGER(btdim)[0] = subLen;
+    INTEGER(btdim)[1] = subLen;
+    setAttrib(sgVec, install("bitlen"), btlen);
+    setAttrib(sgVec, install("bitdim"), btdim);
+    setAttrib(sgVec, install("nbitset"), btcnt);
+    PROTECT(res = allocVector(VECSXP, 2));
+    SET_VECTOR_ELT(res, 0, _ftSetPos);
+    SET_VECTOR_ELT(res, 1, sgVec); 
+    PROTECT(namesres = allocVector(STRSXP, 2));
+    SET_STRING_ELT(namesres, 0, mkChar("setPos"));
+    SET_STRING_ELT(namesres, 1, mkChar("bitVec"));
+    setAttrib(res, R_NamesSymbol, namesres);
+    UNPROTECT(7);
+    return res;
+}
+
+SEXP graph_bitarray_edgeSetToMatrix(SEXP nodes, SEXP bits,
+                                    SEXP _weights, SEXP _directed)
+{
+    SEXP ans, dnms, _dim = getAttrib(bits, install("bitdim"));
+    unsigned char *bytes = (unsigned char *) RAW(bits);
+    int dim = INTEGER(_dim)[0],
+        num_el = dim * dim,
+        directed = asInteger(_directed),
+        linIndx = 0, wtIndx = 0;
+    double *weights = REAL(_weights), *ftMat;
+    PROTECT(ans = allocVector(REALSXP, num_el));
+    ftMat = REAL(ans); 
+    memset(ftMat, 0, sizeof(double) * num_el); 
+    while (linIndx < num_el) {
+        unsigned char v = bytes[linIndx / 8];
+        if (v == 0) {
+            linIndx += 8;
+        } else {
+            if (v & (1 << (linIndx % 8))) {
+                ftMat[linIndx] = weights[wtIndx];
+                if (!directed) {
+                    ftMat[linIndx/dim + (linIndx % dim)*dim] = weights[wtIndx];
+                }
+                wtIndx++;
+            }
+            linIndx++;
+        }
+    }
+    SET_NAMED(_dim, 2);
+    setAttrib(ans, R_DimSymbol, _dim);
+    PROTECT(dnms = allocVector(VECSXP, 2));
+    /* Arguments to .Call have NAMED(x) == 2, so we can
+       reuse here.
+     */
+    SET_VECTOR_ELT(dnms, 0, nodes);
+    SET_VECTOR_ELT(dnms, 1, nodes);
+    setAttrib(ans, R_DimNamesSymbol, dnms);
+    UNPROTECT(2);
+    return ans;    
+}
+
+
