@@ -10,10 +10,12 @@
 \alias{MultiGraph}
 \alias{eweights}
 \alias{edgeSetIntersect0}
+\alias{edgeSetUnion0}
 \alias{subsetEdgeSets}
 \alias{extractFromTo}
 \alias{extractFromTo,MultiGraph-method}
 \alias{extractGraphAM}
+\alias{extractGraphBAM}
 \alias{isDirected,MultiGraph-method}
 \alias{ugraph,MultiGraph-method}
 % these are not supposed to be publicly available
@@ -22,7 +24,24 @@
 \alias{isDirected,UEdgeSet-method}
 \alias{ugraph,DiEdgeSet-method}
 \alias{ugraph,UEdgeSet-method}
-
+\alias{graphIntersect,MultiGraph,MultiGraph-method}
+\alias{graphUnion,MultiGraph,MultiGraph-method}
+\alias{nodeData,MultiGraph,character,character-method}
+\alias{nodeData,MultiGraph,character,missing-method}
+\alias{nodeData,MultiGraph,missing,character-method}
+\alias{nodeData,MultiGraph,missing,missing-method}
+\alias{nodeData<-,MultiGraph,character,character-method}
+\alias{nodeData<-,MultiGraph,missing,character-method}
+\alias{mgEdgeData}
+\alias{mgEdgeData<-}
+\alias{mgEdgeData,MultiGraph,character,character,character,character-method}
+\alias{mgEdgeData,MultiGraph,character,character,missing,character-method}
+\alias{mgEdgeData,MultiGraph,character,missing,character,character-method}
+\alias{mgEdgeData,MultiGraph,character,missing,missing,character-method}
+\alias{mgEdgeData<-,MultiGraph,character,character,character,character-method}
+\alias{mgEdgeData<-,MultiGraph,character,character,missing,character-method}
+\alias{mgEdgeData<-,MultiGraph,character,missing,character,character-method}
+\alias{mgEdgeData<-,MultiGraph,character,missing,missing,character-method}
 \title{EXPERIMENTAL class "MultiGraph"}
 \description{
 
@@ -43,10 +62,12 @@
 }
 
 \usage{
-MultiGraph(edgeSets, nodes = NULL, directed = TRUE)
+MultiGraph(edgeSets, nodes = NULL, directed = TRUE, ignore_dup_edges = FALSE)
 eweights(object, names.sep = NULL)
-edgeSetIntersect0(g)
+edgeSetIntersect0(g, edgeFun = NULL)
+edgeSetIntersect0(g, edgeFun = NULL)
 extractGraphAM(g, edgeSets)
+extractGraphBAM(g, edgeSets)
 }
 
 \arguments{
@@ -93,6 +114,18 @@ extractGraphAM(g, edgeSets)
     
   }
 
+  \item{ignore_dup_edges}{
+
+    If \code{FALSE} (default), specifying duplicate edges in the input
+    is an error.  When set to \code{TRUE} duplicate edges are ignored.
+    Edge weight values are ignored when determining duplicates.  This is
+    most useful for graph import and conversion.
+  }
+  \item{edgeFun}{
+    A user specified named list of functions to resolve edge attributes in a union
+    or intersection operation
+  } 
+
 }
 \section{Constructors}{
   \code{MultiGraph}
@@ -125,6 +158,10 @@ extractGraphAM(g, edgeSets)
     \item{extractGraphAM}{Return a named \code{list} of \code{graphAM}
       objects corresponding to the edge sets from the original 
       \code{MultiGraph}.}
+  
+    \item{extractGraphBAM}{Return a named \code{list} of \code{graphBAM}
+      objects corresponding to the edge sets from the original 
+      \code{MultiGraph}.}
 
     \item{ugraph}{Return a new \code{MultiGraph} object in which all
       edge sets have been converted to undirected edge sets.  This
@@ -133,16 +170,57 @@ extractGraphAM(g, edgeSets)
 
     \item{edgeSetIntersect0}{Return a new \code{MultiGraph} object
     representing the intersection of edges across all edge sets within
-    \code{g}.  The return value will have zero edge sets if the edge
+    \code{g}.  The return value will have a single edge set if the edge
     sets in \code{g} are disjoint.  Otherwise, there will be a single
     edge set containing the shared edges.  The node set is preserved.
-    Edge weights and edge attributes are dropped.}
-   
+    Edge weights and edge attributes are transferred over to the output if they
+    have the same value, else user has the option of providing a function
+    to resolve the conflict.}
+
+    \item{edgeSetUnion0}{Return a new \code{MultiGraph} object
+    representing the union of edges across all edge sets within
+    \code{g}.  The node set is preserved.  Edge weights and edge attributes are
+    transferred over to the output if they have the same value, else user has
+    the option of providing a function to resolve the conflict.}
+
+    \item{\code{graphIntersect(x, y, nodeFun, edgeFun)}}{
+    When given two \code{MultiGraph} objects, \code{graphIntersect}
+    returns a new \code{MultiGraph} containing the nodes and edges in
+    common between the two graphs.  The intersection is computed by
+    first finding the intersection of the node sets, obtaining the
+    induced subgraphs, and finding the intersection of the resulting
+    edge sets. The corresponding named edgeSets in \code{x} and \code{y} should
+    both be either directed or undirected.Node/Edge attributes that are equal
+    are carried over to the result. Non equal edge/node attributes will result 
+    in the corresponding attribute being set to NA. The user has the option 
+    of providing a named list(names of edgeSets) of list (names of edge attributes)
+    of edge functions correspoding to the names of the edge attributes for 
+    resolving conflicting edge attributes (\code{edgeFun}). For resolving any 
+    of the conflicting node attributes, the user has the option of providing a
+    named \code{list} of functions corresponding to the node attribute names (\code{nodeFun}). 
+    }
+
+    \item{\code{graphUnion(x, y, nodeFun, edgeFun)}}{
+    When given two \code{MultiGraph} objects, \code{graphUnion}
+    returns a new \code{MultiGraph} containing the union of nodes and 
+    edges between the two graphs. The corresponding pairs of named edgeSets
+    in  \code{x} and \code{y} should both be either directed or undirected. 
+    Non equal edge/node attributes will result in the corresponding attribute 
+    being set to NA. The user has the option of providing a named list(names of
+    edgeSets) of list (names of edge attributes) of edge functions correspoding
+    to the names of the edge attributes for resolving conflicting edge 
+    attributes (\code{edgeFun}). For resolving any of the conflicting node attributes, the user 
+    has the option of providing a named \code{list} of functions corresponding 
+    to the node attribute names (\code{nodeFun}). 
+
+
+    }
+
     \item{show}{Prints a short summary of a MultiGraph object}
   }
 }
 
-\author{S. Falcon}
+\author{S. Falcon, Gopalakrishnan N}
 
 \examples{
     ft1 <- data.frame(from=c("a", "a", "a", "b", "b"),
@@ -171,5 +249,8 @@ extractGraphAM(g, edgeSets)
     extractFromTo(g)
     extractGraphAM(g)
     extractGraphAM(g, "es1")
+    extractGraphBAM(g, "es1")
+    graphIntersect(g, g)
+    graphUnion(g,g)
 }
 \keyword{classes}

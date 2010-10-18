@@ -21,10 +21,19 @@
 \alias{edgeWeights,graphBAM,character-method}
 \alias{edgeWeights,graphBAM,numeric-method}
 \alias{edgeWeights,graphBAM,missing-method}
-\alias{edgeData,graphBAM,character,missing,character-method}
-\alias{edgeData,graphBAM,missing,missing,missing-method}
 \alias{edgeData,graphBAM,character,character,character-method}
-\alias{edgeData<-,graphBAM,character,character,character,numeric-method}
+\alias{edgeData,graphBAM,character,missing,character-method}
+\alias{edgeData,graphBAM,missing,character,character-method}
+\alias{edgeData,graphBAM,missing,missing,missing-method}
+\alias{edgeData,graphBAM,missing,missing,character-method}
+\alias{edgeData<-,graphBAM,character,character,character-method}
+\alias{edgeData<-,graphBAM,missing,character,character-method}
+\alias{edgeData<-,graphBAM,character,missing,character-method}
+\alias{edgeData<-,graphBAM,missing,missing,character-method}
+\alias{edgeData<-,graphBAM,character,character,character,ANY-method}
+\alias{edgeData<-,graphBAM,missing,character,character,ANY-method}
+\alias{edgeData<-,graphBAM,character,missing,character,ANY-method}
+\alias{edgeData<-,graphBAM,missing,missing,character,ANY-method}
 \alias{graphBAM}
 \alias{coerce,graphBAM,graphAM-method}
 \alias{coerce,graphBAM,graphNEL-method}
@@ -32,16 +41,30 @@
 \alias{extractFromTo,graphBAM-method}
 \alias{ugraph,graphBAM-method}
 \alias{adj,graphBAM,character-method}
-\alias{intersection,graphBAM,graphBAM-method}
-\alias{union,graphBAM,graphBAM-method}
+\alias{graphIntersect}
+\alias{graphIntersect,graphBAM,graphBAM-method}
+\alias{graphUnion}
+\alias{graphUnion,graphBAM,graphBAM-method}
 \alias{nodes<-,graphBAM,character-method}
+\alias{removeEdgesByWeight}
+\alias{removeEdgesByWeight,graphBAM-method}
+\alias{nodeDataDefaults,graphBAM,character-method}
+\alias{nodeDataDefaults,graphBAM,missing-method}
+\alias{nodeDataDefaults<-,graphBAM,character,ANY-method}
+\alias{nodeDataDefaults<-,graphBAM,missing,ANY-method}
+\alias{nodeData,graphBAM,character,character-method}
+\alias{nodeData,graphBAM,character,missing-method}
+\alias{nodeData,graphBAM,missing,character-method}
+\alias{nodeData,graphBAM,missing,missing-method}
+\alias{nodeData<-,graphBAM,character,character-method}
+\alias{nodeData<-,graphBAM,missing,character-method}
 
 \title{EXPERIMENTAL class "graphBAM"}
 \description{
   The graphBAM class represents a graph as an adjacency matrix.  The
   adjacency matrix is stored as a bit array using a \code{raw} vector to
   reduce the memory footprint and speed operations like
-  \code{intersection}.  This class is EXPERIMENTAL and its API is
+  \code{graphIntersection}.  This class is EXPERIMENTAL and its API is
   subject to change.
 }
 
@@ -60,6 +83,7 @@ graphBAM(df, nodes=NULL, edgemode="undirected", ignore_dup_edges = FALSE)
   }
   
   \item{nodes}{
+
 
     A character vector of node labels.  Use this to add degree zero
     nodes to the graph.  If \code{NULL}, the set of nodes found in
@@ -164,7 +188,8 @@ Class \code{"\linkS4class{graph}"}, directly.
     }
     
     \item{\code{removeNode(node, object)}}{
-      Operation not supported.
+     Returns a new \code{graphBAM} object with the specified node removed.
+     Node and edge attributes corresponding to that node are also removed.
     }
     
     \item{\code{edgeData(self, from, to, attr)}}{
@@ -185,17 +210,40 @@ Class \code{"\linkS4class{graph}"}, directly.
       
     }
 
-    \item{\code{intersection(x, y)}}{
+    \item{\code{graphIntersect(x, y, nodeFun, edgeFun)}}{
 
-      When given two \code{graphBAM} objects, \code{intersection}
+      When given two \code{graphBAM} objects, \code{graphIntersect}
       returns a new \code{graphBAM} containing the nodes and edges in
-      common between the two graphs.  The intersection is computed by
+      common between the two graphs.  Both x and y should either be 
+      directed or undirected. The intersection is computed by
       first finding the intersection of the node sets, obtaining the
-      induced subgraphs, and finding the intersection of the resulting
-      edge sets.  All node and edge attributes are dropped.  Edges, if
-      any, in the resulting graph will have weights set to one.
+      resulting subgraphs, and finding the intersection of the resulting
+      edge sets. Node/Edge attributes that are equal are carried over to
+      the result. Non equal edge/node attributes will result in the 
+      corresponding attribute being set to NA. The user has the option 
+      of providing a named list of functions correspoding to the names of 
+      the edge attributes for resolving conflicting edge attributes. 
+      For resolving any of the conflicting node attributes
+      the user has the option of providing a named \code{list} of functions
+      corresponding to the node attribute names. 
+
     }
-  
+    \item{\code{graphUnion(x, y, nodeFun, edgeFun)}}{
+    When given two \code{graphBAM} objects, \code{graphUnion}
+    returns a new \code{graphBAM} containing the union of nodes and 
+    edges between the two graphs. The union is compted by first finding
+    the union of the nodesets. Both x and y should be either directed or 
+    undirected. Node/Edge attributes that are equal are carried over to
+    the result. Non equal edge/node attributes will result in the 
+    corresponding attribute being set to NA. The user has the option 
+      of providing a named list of functions correspoding to the names of 
+      the edge attributes for resolving conflicting edge attributes. 
+      For resolving any of the conflicting node attributes
+      the user has the option of providing a named \code{list} of functions
+      corresponding to the node attribute names. 
+
+    }
+ 
     \item{\code{edgemode(object) <- value}}{
       
       Set the edgemode for the graph ("directed" or "undirected").  If
@@ -231,16 +279,17 @@ Class \code{"\linkS4class{graph}"}, directly.
 
 }
 
-\author{S. Falcon, N. Gopalakrishnan}
+\author{N. Gopalakrishnan, S. Falcon}
 
 \examples{
     f <- c("a", "a", "b", "c", "d")
     t <- c("b", "c", "c", "d", "a")
-    weight <- rep(1,length(f))
+    weight <- c(2.3, 2.3, 4.3, 1.0, 3.0)
     df <- data.frame(from=f, to=t, weight= weight)
     g <- graphBAM(df)
     gd <- graphBAM(df, edgemode = "directed")
     nd <- nodes(g)
+    nodeData(g,n=c("b", "c"), attr ="color") <- "red"
     w1 <- edgeWeights(g)
     w2 <- edgeWeights(g,"a")
     w3 <- edgeWeights(g,1)
@@ -255,8 +304,10 @@ Class \code{"\linkS4class{graph}"}, directly.
     am <- as(g,"graphAM")
     nl <- as(g,"graphNEL")
     mt <- as(g,"matrix")
-    k  <- intersection(g,g)
-    k <- union(g,g)
+    k  <- graphIntersect(g,g)
+    k <- graphUnion(g,g)
+    e <- removeEdgesByWeight(g,lessThan= 3.0)
+    f <- removeNode("a", g)
     g
     gd
 }

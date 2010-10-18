@@ -1,7 +1,9 @@
 useDynLib(BioC_graph, graph_bitarray_sum, graph_bitarray_set,
           graph_bitarray_undirect,
           graph_bitarray_transpose,graph_bitarray_rowColPos,
-          graph_bitarray_edgeSetToMatrix)
+          graph_bitarray_edgeSetToMatrix, graph_bitarray_removeEdges,
+          graph_bitarray_Intersect_Attrs, graph_bitarray_Union_Attrs,
+          graph_bitarray_getEdgeAttrPos)
 
 importClassesFrom(methods, ANY, character, list, logical, matrix,
                   missing, "NULL", numeric, oldClass, vector)
@@ -27,7 +29,8 @@ exportMethods(DFS, Dist, acc, addEdge, addNode, adj,
       "attrDefaults<-", edgeDataDefaults, "edgeDataDefaults<-",
       nodeDataDefaults, "nodeDataDefaults<-", edgeData, "edgeData<-", nodeData,
       "nodeData<-", attrDataItem, "attrDataItem<-",
-      "removeAttrDataItem<-", ugraph, leaves, updateGraph, extractFromTo)
+      "removeAttrDataItem<-", ugraph, leaves, updateGraph, extractFromTo, 
+      graphIntersect, graphUnion, removeEdgesByWeight)
 
 
 export(boundary, buildRepDepGraph, calcProb, calcSumProb,
@@ -47,7 +50,7 @@ export(graph.par, graph.par.get, graphRenderInfo,
 export(graphBAM)
 
 
-export(MultiGraph, eweights, edgeSetIntersect0, extractFromTo, subsetEdgeSets,
-       extractGraphAM)
+export(MultiGraph, eweights, edgeSetIntersect0, edgeSetUnion0, extractFromTo, subsetEdgeSets,
+       extractGraphAM, extractGraphBAM, mgEdgeData, "mgEdgeData<-")
 
 S3method(write,tlp)

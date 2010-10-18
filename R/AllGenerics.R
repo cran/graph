@@ -83,6 +83,10 @@ setGeneric("removeEdge", function(from, to, graph)
 
 setGeneric("removeEdges", function(container, from, to, ...)
            standardGeneric("removeEdges"))
+
+
+setGeneric("removeEdgesByWeight", function(graph, ...)
+        standardGeneric("removeEdgesByWeight"))
 ## ---------------------------------------------------------------------
 
 
@@ -147,6 +151,14 @@ setGeneric("edgeData", function(self, from, to, attr)
 
 setGeneric("edgeData<-", function(self, from, to, attr, value)
            standardGeneric("edgeData<-"))
+
+setGeneric("mgEdgeData", function(self, edgeSet, from, to, attr)
+        standardGeneric("mgEdgeData"))
+
+setGeneric("mgEdgeData<-", function(self, edgeSet, from, to, attr, value)
+        standardGeneric("mgEdgeData<-"))
+
+
 ## ---------------------------------------------------------------------
 
 
@@ -235,3 +247,12 @@ setGeneric("updateGraph", function(object)
            standardGeneric("updateGraph"))
 
 setGeneric("extractFromTo", function(g) standardGeneric("extractFromTo"))
+
+setGeneric("graphIntersect", function(x, y, ...)
+           standardGeneric("graphIntersect"))
+
+setGeneric("graphUnion", function(x, y, ...)
+           standardGeneric("graphUnion"))
+
+
+
