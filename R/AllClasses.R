@@ -5,7 +5,7 @@ setClass("attrData", representation(data="list",
 ## (FH Oct 4.) The edgemode slot is deprecated, the information will
 ## go into the egemode item of the graphData list.
 
-
+setClass("graphBase")
 
 ## class to hold information regarding rendering of a graph.  Doesn't
 ## make sense except as a slot in a graph (the names have to match)
@@ -26,7 +26,8 @@ setClass("graph", representation(## edgemode="character",
                                  ## edgeInfo="list",
 
                                  graphData="list",
-                                 "VIRTUAL"))
+                                 "VIRTUAL"),
+         contains = "graphBase")
 
 ## Node Edge List representation
 setClass("graphNEL",
@@ -99,13 +100,22 @@ setClass("DiEdgeSet", contains = "MGEdgeSet")
 
 setClass("UEdgeSet", contains = "MGEdgeSet")
 
+setClass("attrPos",
+          representation = representation(
+          nodePos = "list",
+          edgePos = "list"))
+
 setClass("MultiGraph",
          representation = representation(
          nodes = "character",
-         nodeData = "list",
+         nodeData = "attrData",
          ## items will be MGEdgeSet objects
-         edge_sets = "list"))
+         edge_sets = "list",
+         edge_defaults = "list",
+         userAttrPos = "attrPos"),
+         contains = "graphBase")
 
 setClass("graphBAM", contains = "graph",
-         representation(edgeSet = "MGEdgeSet", nodes = "character"))
+         representation(edgeSet = "MGEdgeSet", nodes = "character", 
+             userAttrPos = "attrPos"))
 

@@ -32,6 +32,16 @@
 \alias{nodeData,MultiGraph,missing,missing-method}
 \alias{nodeData<-,MultiGraph,character,character-method}
 \alias{nodeData<-,MultiGraph,missing,character-method}
+\alias{mgEdgeDataDefaults}
+\alias{mgEdgeDataDefaults<-}
+\alias{mgEdgeDataDefaults,MultiGraph,character,character-method}
+\alias{mgEdgeDataDefaults,MultiGraph,character,missing-method}
+\alias{mgEdgeDataDefaults<-,MultiGraph,character,character,ANY-method}
+\alias{mgEdgeDataDefaults<-,MultiGraph,character,missing,list-method}
+\alias{nodeDataDefaults,MultiGraph,character-method}
+\alias{nodeDataDefaults,MultiGraph,missing-method}
+\alias{nodeDataDefaults<-,MultiGraph,character,ANY-method}
+\alias{nodeDataDefaults<-,MultiGraph,missing,list-method}
 \alias{mgEdgeData}
 \alias{mgEdgeData<-}
 \alias{mgEdgeData,MultiGraph,character,character,character,character-method}
@@ -42,6 +52,11 @@
 \alias{mgEdgeData<-,MultiGraph,character,character,missing,character-method}
 \alias{mgEdgeData<-,MultiGraph,character,missing,character,character-method}
 \alias{mgEdgeData<-,MultiGraph,character,missing,missing,character-method}
+\alias{edges,MultiGraph,character-method}
+\alias{edgeNames,MultiGraph-method}
+\alias{edges,MultiGraph,missing-method}
+\alias{edgeSets}
+\alias{edgeSets,MultiGraph-method}
 \title{EXPERIMENTAL class "MultiGraph"}
 \description{
 
@@ -147,6 +162,12 @@ extractGraphBAM(g, edgeSets)
       \code{object} with a \code{TRUE} indicating a directed edge set
       and \code{FALSE} for undirected.}
 
+    \item{edges}{Returns a list named by edge set; for the edges in the 
+        MultiGraph}
+
+    \item{edgeNames}{Returns a list named by the edge set; for the names
+        of the edges in the MultiGraph}
+
     \item{extractFromTo}{Return a list named by the edge sets; each
       element is a data frame with column names from, to and weight
 	  corresponding to the connected nodes in the edge set.}
@@ -215,6 +236,11 @@ extractGraphBAM(g, edgeSets)
 
 
     }
+    \item{ \code{edgeSets(object, ...)}}{
+    Returns the names of the  edgeSets in the  MultiGraph
+    \code{object} as a character vector.
+    } 
+    
 
     \item{show}{Prints a short summary of a MultiGraph object}
   }
@@ -237,10 +263,13 @@ extractGraphBAM(g, edgeSets)
 
     nodes(g)
     numEdges(g)
-
     eweights(g)
     eweights(g, names.sep = "=>")
     isDirected(g)
+    edges(g, edgeSet ="es1")
+    edges(g, "a", "es1")
+    edgeNames(g, "es2")
+    edgeSets(g)
     ug <- ugraph(g)
     isDirected(ug)
     numEdges(ug)
@@ -252,5 +281,11 @@ extractGraphBAM(g, edgeSets)
     extractGraphBAM(g, "es1")
     graphIntersect(g, g)
     graphUnion(g,g)
+    mgEdgeDataDefaults(g, "es1", attr = "color" ) <- "white"
+    mgEdgeData(g, "es1", from = "a", to = c("b", "c"), attr = "color") <- "red"
+    mgEdgeData(g, "es1", from = "a", to = c("b", "c"), attr = "color") 
+    nodeDataDefaults(g, attr ="shape") <- "circle"
+    nodeData(g, n = c("a", "b", "c"), attr = "shape") <- "triangle"
+    nodeData(g, n = c("a", "b", "x", "y"), attr = "shape") 
 }
 \keyword{classes}

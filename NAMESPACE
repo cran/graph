@@ -3,7 +3,7 @@ useDynLib(BioC_graph, graph_bitarray_sum, graph_bitarray_set,
           graph_bitarray_transpose,graph_bitarray_rowColPos,
           graph_bitarray_edgeSetToMatrix, graph_bitarray_removeEdges,
           graph_bitarray_Intersect_Attrs, graph_bitarray_Union_Attrs,
-          graph_bitarray_getEdgeAttrPos)
+          graph_bitarray_getEdgeAttrOrder)
 
 importClassesFrom(methods, ANY, character, list, logical, matrix,
                   missing, "NULL", numeric, oldClass, vector)
@@ -17,7 +17,7 @@ importFrom(utils, CRAN.packages, modifyList)
 exportClasses(distGraph,
       clusterGraph, graph, graphNEL, file, connection, gzfile, bzfile,
       url, graphAM, attrData, simpleEdge, edgeSet, edgeSetNEL,
-      edgeSetAM, multiGraph, renderInfo, MultiGraph, graphBAM)
+      edgeSetAM, multiGraph, renderInfo, MultiGraph, graphBAM, graphBase)
 
 exportMethods(DFS, Dist, acc, addEdge, addNode, adj,
       clearNode, clusteringCoefficient, combineNodes, complement, connComp,
@@ -27,10 +27,11 @@ exportMethods(DFS, Dist, acc, addEdge, addNode, adj,
       nodes, numNodes, numEdges, removeEdge, removeNode, show, subGraph,
       threshold, toGXL, union, validateGXL, coerce, toDotR, attrDefaults,
       "attrDefaults<-", edgeDataDefaults, "edgeDataDefaults<-",
-      nodeDataDefaults, "nodeDataDefaults<-", edgeData, "edgeData<-", nodeData,
+      mgEdgeDataDefaults, "mgEdgeDataDefaults<-", nodeDataDefaults, 
+      "nodeDataDefaults<-", edgeData, "edgeData<-", nodeData,
       "nodeData<-", attrDataItem, "attrDataItem<-",
       "removeAttrDataItem<-", ugraph, leaves, updateGraph, extractFromTo, 
-      graphIntersect, graphUnion, removeEdgesByWeight)
+      graphIntersect, graphUnion, removeEdgesByWeight, edgeSets)
 
 
 export(boundary, buildRepDepGraph, calcProb, calcSumProb,
